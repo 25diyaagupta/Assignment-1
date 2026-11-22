@@ -70,15 +70,15 @@ Governance and is not a harness gate. "Rule n" refers to the project brief item 
 - The schema is independent of prompt or model wording: a change to `prompts/` or to the model
   never changes field names, types or enumerations. Model output is parsed and validated against
   the schema in code; text that does not validate is never returned to the caller as-is.
-- The schema changes only through a spec amendment (Governance) and a new `baseline` tag.
+- The schema changes only through a spec amendment (Governance) and a new `baseline-1b-before-implement` tag.
 
 ### VI. Evaluation Contract Declared Up Front, Never Lowered (Rule 6)
 
 - `spec.md` declares the scoring method (what counts as a pass per layer, how cases combine
   into a score, how service errors are treated per Principle X) and the numeric pass threshold
-  before the `baseline` tag. The harness reads the same values from `.harness/eval_config.json`.
+  before the `baseline-1b-before-implement` tag. The harness reads the same values from `.harness/eval_config.json`.
 - After declaration the threshold is never lowered and the scoring method never relaxed.
-  Check (harness, G1): `.harness/` is unchanged since `baseline`. Check (review): `git log -p`
+  Check (harness, G1): `.harness/` is unchanged since `baseline-1b-before-implement`. Check (review): `git log -p`
   on `spec.md` shows no decrease of the threshold line.
 
 ### VII. Three-Layer Evaluation Pipeline (Rule 7)
@@ -96,9 +96,9 @@ Governance and is not a harness gate. "Rule n" refers to the project brief item 
 ### VIII. Protected Dataset, Harness and Tests (Rule 8)
 
 - `evals/dataset.json`, `.harness/` and `tests/` are written and approved by a human before
-  any implementation code exists. Approval is the git tag `baseline`.
-- After `baseline`, implementation and repair commits change only `src/` and `prompts/`.
-  Check (harness, G1): `git diff --name-only baseline..HEAD -- evals/dataset.json .harness tests`
+  any implementation code exists. Approval is the git tag `baseline-1b-before-implement`.
+- After `baseline-1b-before-implement`, implementation and repair commits change only `src/` and `prompts/`.
+  Check (harness, G1): `git diff --name-only baseline-1b-before-implement..HEAD -- evals/dataset.json .harness tests`
   is empty, and every repair commit touches no path outside `src/` and `prompts/`.
 - A change to protected files needs a human-approved spec amendment and a new tag
   `baseline-vN`.
@@ -124,7 +124,7 @@ Governance and is not a harness gate. "Rule n" refers to the project brief item 
 ### XI. First Generation Preserved, Bounded Repair (Rule 11)
 
 - The first generated implementation, and its first harness report, are committed unchanged
-  and tagged `gen-1` before any repair.
+  and tagged `gen-1b-first-generation` before any repair.
 - Each repair cycle allows at most 2 attempts, each a separate commit whose message starts
   `repair(1/2):` or `repair(2/2):`. If the harness is still red after attempt 2, work stops
   and a human review is opened before any further change.
@@ -143,7 +143,7 @@ The harness runs these gates in order; each must pass for a change to be accepte
 
 | Gate | Command / check | Pass condition |
 |------|-----------------|----------------|
-| G1 Integrity | `git diff --name-only baseline..HEAD -- evals/dataset.json .harness tests` | empty diff |
+| G1 Integrity | `git diff --name-only baseline-1b-before-implement..HEAD -- evals/dataset.json .harness tests` | empty diff |
 | G2 Suppressions | `rg` for suppression comment syntax in `*.py` | zero matches |
 | G3 Lint/format | `ruff check` and `ruff format --check` over `src tests .harness` | zero findings |
 | G4 Security | `bandit -r src .harness` | zero findings |
@@ -162,8 +162,8 @@ G1–G8 make no model calls. G9 is the only gate that uses the network and the k
 2. `/speckit-plan`: `plan.md` with dependencies and justifications, the `ModelClient` protocol,
    error mapping and the module map. Runs the Constitution Check.
 3. `/speckit-tasks`. Write `evals/dataset.json`, `.harness/` and `tests/`; tests fail (red).
-   A human approves; tag `baseline`.
-4. `/speckit-implement`. Commit the first output and its harness report unchanged; tag `gen-1`.
+   A human approves; tag `baseline-1b-before-implement`.
+4. `/speckit-implement`. Commit the first output and its harness report unchanged; tag `gen-1b-first-generation`.
 5. Run the harness. If red, at most 2 `repair(n/2)` commits touching only `src/` and
    `prompts/`. If still red, human review.
 
@@ -178,7 +178,7 @@ G1–G8 make no model calls. G9 is the only gate that uses the network and the k
   Amendments need human approval.
 - Every review confirms all harness gates are green and works through these **(review)**
   checks: every dependency justified (I); threshold never lowered in `spec.md` history (VI);
-  at most 2 `repair` commits per cycle and `gen-1` untouched (XI); dataset names and places
+  at most 2 `repair` commits per cycle and `gen-1b-first-generation` untouched (XI); dataset names and places
   fictional (XII).
 
 ## Change Notes
@@ -187,5 +187,8 @@ G1–G8 make no model calls. G9 is the only gate that uses the network and the k
   Principles I–XII encode project rules 1–12. Lessons carried over from Part-1A: the smaller
   documented ruff rule set for `tests/` (II) and the project-scoped secret scan (IX) are in
   place from the start.
+- **2026-11-22** (Deepanshi Bansal, with Claude): renamed git tags `baseline` →
+  `baseline-1b-before-implement` and `gen-1` → `gen-1b-first-generation` (Principles V, VI,
+  VIII, XI, gate G1, Development Workflow, Governance). Naming only; no rule changed.
 
 **Version**: 1.0.0 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22
