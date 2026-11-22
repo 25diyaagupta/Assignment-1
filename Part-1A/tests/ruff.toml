@@ -1,0 +1,6 @@
+# Smaller rule set for tests/ (plan.md §Ruff Rule Sets, constitution II).
+# S, PL, D and ANN are not selected; the reasons are recorded in plan.md.
+extend = "../pyproject.toml"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "C90", "UP", "SIM"]
