@@ -1,15 +1,21 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.0.1 (PATCH, as directed by the project owner)
-- Modified principles: II (Zero Lint and Security Findings) — ruff scope split: full rule set
-  for project code, smaller rule set recorded in plan.md for tests/
+- Version change: 1.0.1 → 1.0.2 (numbered PATCH as directed by the project owner; under the
+  Governance rules, removing checks would normally be MAJOR)
+- Reason: lean-scope amendment for a one-day deadline
+- Modified principles: I, III, IV, V, X, XVI (checks move from the harness to human review);
+  II (ruff on src and tests only, suppression check limited to comment syntax in *.py);
+  VII (working-tree scan only, no history scan); VIII (git diff only, no checksum manifest);
+  XI (mypy removed, ruff ANN kept); XII (reverse-order run removed); XV (pip-audit removed)
+- Modified sections: Quality Gates (13 gates → 7, adds a self-check on broken fakes);
+  Governance (review checklist for checks that are not harness gates)
 - Added principles: none
-- Added sections: Change Notes
-- Removed sections: none
+- Removed principles: none
 - Templates requiring updates: none; plan.md and tasks.md of 001-tiered-rate-limiter updated
   to match (✅)
 - Deferred TODOs: none
-- Previous: (template) → 1.0.0, initial ratification with principles I–XVI
+- Previous: 1.0.0 → 1.0.1 (II: ruff scope split for tests/); (template) → 1.0.0, initial
+  ratification with principles I–XVI
 -->
 
 # Tiered Token-Bucket Rate Limiter Constitution
@@ -19,7 +25,8 @@ a limiter result to an HTTP outcome (200, or 429 with a `Retry-After` header).
 
 Every principle below is phrased so that a tool, script or `git` query can return pass/fail.
 "Harness" means the gate scripts under `.harness/`, run by one command that exits 0 only when all
-gates pass.
+gates pass. A check marked **(review)** is run by the human reviewer, using the checklist in
+Governance, and is not a harness gate.
 
 ## Core Principles
 
@@ -27,23 +34,21 @@ gates pass.
 
 - The package declares `requires-python = ">=3.12,<3.13"`; the harness runs on CPython 3.12.
 - Modules in the core package import only the standard library and the package itself.
-  Check: an import scan of `src/` finds no third-party top-level module.
+  Check (review): an import scan of `src/` finds no third-party top-level module.
 - Every dependency beyond the standard library (including dev and test tools) is listed in
-  `plan.md` with a one-line justification. A dependency with no entry fails the gate.
+  `plan.md` with a one-line justification. Check (review): a dependency with no entry fails
+  review.
 
 ### II. Zero Lint and Security Findings, No Suppressions
 
-- `ruff check .` and `ruff format --check .` report zero findings. Files in `src/`,
-  `.harness/` and `bench/` are checked with the full rule set in `pyproject.toml`. Files in
-  `tests/` are checked with a smaller rule set, configured in `tests/ruff.toml` as its own
-  `select` list and recorded with a justification for each omitted rule family in `plan.md`.
-  That file may only select fewer rule families; it must not use `ignore`, `extend-ignore`,
-  `per-file-ignores` or `exclude`.
+- `ruff check src tests` and `ruff format --check src tests` report zero findings. `src/` is
+  checked with the full rule set in `pyproject.toml`. `tests/` is checked with a smaller rule
+  set in `tests/ruff.toml` (its own `select` list), recorded with a justification for each
+  omitted rule family in `plan.md`. Neither file has `ignore`, `extend-ignore`,
+  `per-file-ignores` or `exclude` entries.
 - `bandit -r src` reports zero findings at every severity and confidence level.
-- The repository has no `noqa`, `nosec`, `type: ignore`, `pragma: no cover` or
-  `# fmt: off` comments, and no `ignore`, `extend-ignore`, `per-file-ignores`, `skips` or
-  `exclude` entries that switch off rules for project code. Check: `rg` over the repo and the tool
-  config returns no matches.
+- No `*.py` file has a `noqa`, `nosec`, `type: ignore`, `pragma: no cover` or `fmt: off`
+  comment. Check: `rg` over `*.py` files for that comment syntax returns no matches.
 
 ### III. Binary, Traceable Acceptance Criteria
 
@@ -51,8 +56,8 @@ gates pass.
   Words like "fast", "robust" or "appropriate" with no threshold are not allowed.
 - Every AC has at least one pytest test. Every test function names exactly the AC IDs it covers
   in its name or in a `@pytest.mark.ac("AC-nnn")` marker.
-- Check: a traceability script reports zero ACs with no test, zero tests with no AC, and zero
-  references to AC IDs that do not exist in `spec.md`.
+- Check (review): zero ACs with no test, zero tests with no AC, and zero references to AC IDs
+  that do not exist in `spec.md`.
 
 ### IV. Injected Clock, Deterministic Behaviour
 
@@ -60,7 +65,7 @@ gates pass.
   Only the one adapter module that provides the production clock may call `time.*`.
 - Outside that adapter, `src/` contains no calls to `time.time`, `time.monotonic`,
   `time.perf_counter`, `time.sleep`, `datetime.now`, `datetime.utcnow` or `random`.
-  Check: an AST or `rg` scan returns zero hits.
+  Check (review): an `rg` scan of `src/` returns zero hits.
 - Tests use a fake clock and never sleep. The same inputs and clock readings always give the
   same outputs.
 
@@ -69,8 +74,7 @@ gates pass.
 - No function or method is longer than 40 lines, counted from the `def` line to the last line of
   its body (AST `end_lineno - lineno + 1`), and that count includes docstrings.
 - Cyclomatic complexity is at most 10 per function (ruff `C901`, `max-complexity = 10`).
-- Check: ruff for complexity, plus a harness AST script for length (ruff has no line-length rule
-  for functions).
+- Check: ruff `C901` (gate G3) for complexity. Check (review): function length.
 
 ### VI. Branch Coverage ≥ 90 %
 
@@ -79,9 +83,9 @@ gates pass.
 
 ### VII. No Secrets in the Repository
 
-- No keys, tokens, passwords or credentials are committed, and none appear in git history.
-- Check: a secret scanner over the working tree and full history reports zero findings, and
-  Bandit's hard-coded-credential checks (B105–B107) report zero findings.
+- No keys, tokens, passwords or credentials are committed.
+- Check: a secret scanner over the working tree reports zero findings, and Bandit's
+  hard-coded-credential checks (B105–B107) report zero findings. Git history is not scanned.
 
 ### VIII. Protected, Pre-Approved Tests and Harness
 
@@ -90,7 +94,7 @@ gates pass.
 - After that tag, the implementing agent must not add, edit, delete or weaken any file under
   `tests/` or `.harness/`. It must not lower thresholds, skip or xfail tests, or bypass a gate.
 - Check: `git diff --name-only harness-approved..HEAD -- tests .harness` is empty for every
-  implementation or repair commit. A checksum manifest in `.harness/` must match.
+  implementation or repair commit.
 - A change to protected files needs a human-approved specification change (Principle IX) and a
   new approval tag.
 
@@ -108,22 +112,21 @@ gates pass.
   before any repair driven by the harness.
 - At most 2 repair attempts are allowed, each one a separate commit with a message starting
   `repair(1/2):` or `repair(2/2):`.
-- If the harness is still red after attempt 2, work stops and a human review is opened. A third
-  `repair` commit fails the gate.
+- If the harness is still red after attempt 2, work stops and a human review is opened.
+  Check (review): a third `repair` commit fails review.
 
 ### XI. Static Typing (additional)
 
 - All public functions, methods and class attributes in `src/` have type annotations.
-- `mypy --strict src` reports zero errors. Ruff `ANN` rules are enabled.
+- Check: ruff `ANN` rules (gate G3). mypy is not run.
 
 ### XII. Hermetic, Fast, Order-Independent Tests (additional)
 
 - Tests do no network I/O, write no files outside `tmp_path`, do not sleep and do not read the
   wall clock.
-- The suite passes in its default order and in reverse order (`pytest -p no:randomly` plus
-  a reversed-collection hook in `.harness/`), with identical results.
+- Tests do not depend on each other's state.
 - Full-suite wall time is under 10 seconds on the reference machine. This keeps the tests
-  free of real time.
+  free of real time. Check (review): the time printed by gate G5.
 
 ### XIII. Explicit Error Contract (additional)
 
@@ -142,13 +145,12 @@ gates pass.
 ### XV. Pinned, Audited Dependencies (additional)
 
 - Dev and test tools are pinned to exact versions in one lock or requirements file.
-- `pip-audit` reports zero known vulnerabilities for the pinned set.
 
 ### XVI. Numeric Determinism (additional)
 
 - Token arithmetic gives the same results on every platform. Token counts and clock readings in
-  core logic are typed `int` (fixed units) or `Fraction`, never `float`. Check: mypy annotations
-  plus an AST scan for `float` in `src/` core modules. The representation is chosen in `plan.md`.
+  core logic are typed `int` (fixed units) or `Fraction`, never `float`. Check (review): an `rg`
+  scan for `float` in `src/` core modules. The representation is chosen in `plan.md`.
 - `Retry-After` is a whole number of seconds ≥ 1, rounded up from the exact wait time. This is
   verified by ACs covering boundary values.
 
@@ -158,19 +160,13 @@ The harness runs these gates in order, and each must pass for a change to be acc
 
 | Gate | Command / check | Pass condition |
 |------|-----------------|----------------|
-| G1 Protection | diff vs `harness-approved` + checksum manifest | empty diff, checksums match |
-| G2 Suppressions | `rg` for suppression comments and disabled rules | zero matches |
-| G3 Lint/format | `ruff check .` and `ruff format --check .` | zero findings |
+| G1 Integrity | `git diff --name-only harness-approved..HEAD -- tests .harness` | empty diff |
+| G2 Suppressions | `rg` for suppression comment syntax in `*.py` files | zero matches |
+| G3 Lint/format | `ruff check src tests` and `ruff format --check src tests` | zero findings |
 | G4 Security | `bandit -r src` | zero findings |
-| G5 Types | `mypy --strict src` | zero errors |
-| G6 Clock purity | AST scan for wall-clock and `random` use | zero hits outside clock adapter |
-| G7 Size/complexity | AST length script and ruff `C901` | ≤ 40 lines, CC ≤ 10 |
-| G8 Traceability | AC ↔ test mapping script | zero orphans either way |
-| G9 Tests | `pytest` normal and reverse order | all pass, < 10 s |
-| G10 Coverage | `coverage report --fail-under=90` (branch) | ≥ 90 % |
-| G11 Secrets | secret scanner over tree and history | zero findings |
-| G12 Dependencies | `pip-audit` and justification check against `plan.md` | zero vulns, all justified |
-| G13 Repair budget | count of `repair(` commits after `impl-baseline` | ≤ 2 |
+| G5 Tests and coverage | `coverage run --branch -m pytest`, then `coverage report --fail-under=90` | all tests pass, ≥ 90 % |
+| G6 Secrets | `detect-secrets scan` over the working tree | zero findings |
+| G7 Self-check | G1–G6 run against deliberately broken fakes built in a temporary directory | every gate fails on its fake |
 
 ## Development Workflow
 
@@ -193,6 +189,11 @@ The harness runs these gates in order, and each must pass for a change to be acc
   principle is added or materially expanded, PATCH when only the wording is clarified.
 - No implementing agent may amend this constitution. Amendments need human approval.
 - Every review checks that all harness gates are green and that Principles VIII and X hold.
+- Every review also works through this checklist of **(review)** checks, which are not harness
+  gates: no third-party imports in `src/` and every dependency justified (I); AC ↔ test
+  traceability (III); no wall-clock or `random` use outside the clock adapter (IV); functions
+  ≤ 40 lines (V); every commit touching a Spec Kit artifact adds a change note (IX); at most 2
+  `repair` commits (X); suite time under 10 s (XII); no `float` in core modules (XVI).
 
 ## Change Notes
 
@@ -202,5 +203,13 @@ The harness runs these gates in order, and each must pass for a change to be acc
   with ordinary pytest code (`S101` flags every `assert`, `PLR2004` flags the literal expected
   values the ACs specify), and the no-suppression rule left no compliant way to write the tests.
   No AC IDs are affected.
+- **2026-11-22** (Deepanshi Bansal, with Claude), v1.0.1 → v1.0.2: lean-scope amendment. The
+  harness is cut to 7 gates: ruff (full set on `src/`, smaller documented set on `tests/`),
+  bandit on `src/`, pytest with the coverage threshold, the suppression check (comment syntax in
+  `*.py` only), a working-tree secret scan, an integrity diff against `harness-approved`, and a
+  self-check on deliberately broken fakes. The checks in I, III, IV, V, X, XII and XVI move to
+  human review. The history secret scan, the checksum manifest, mypy, pip-audit and the
+  reverse-order run are removed. Reason: one-day deadline. No AC IDs are affected, and no
+  requirement or AC in spec.md changes.
 
-**Version**: 1.0.1 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22
+**Version**: 1.0.2 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22
