@@ -1,0 +1,34 @@
+PASS G1
+PASS G2
+All checks passed!
+15 files already formatted
+PASS G3
+PASS G4
+........................................................................ [ 56%]
+.......................................................                  [100%]
+127 passed in 3.80s
+Name                                 Stmts   Miss Branch BrPart  Cover   Missing
+--------------------------------------------------------------------------------
+src/tiered_limiter/__init__.py           6      0      0      0   100%
+src/tiered_limiter/_validate.py         39      2     18      1    95%   120-121
+src/tiered_limiter/bucket.py            19      0      2      0   100%
+src/tiered_limiter/clock.py              9      1      0      0    89%   34
+src/tiered_limiter/config.py            32      0      4      0   100%
+src/tiered_limiter/errors.py             2      0      0      0   100%
+src/tiered_limiter/http_mapping.py      16      0      2      0   100%
+src/tiered_limiter/limiter.py           61      4     14      2    92%   56-57, 59-60
+--------------------------------------------------------------------------------
+TOTAL                                  184      7     40      3    96%
+G5: wall time 4.21 s
+PASS G5
+G6: scanning 22 files
+PASS G6
+ok   g1-integrity: passes clean, fails on its defect
+ok   g2-suppression: passes clean, fails on its defect
+ok   g3-lint: passes clean, fails on its defect
+ok   g4-bandit: passes clean, fails on its defect
+ok   g5-failing-test: passes clean, fails on its defect
+ok   g5-low-coverage: passes clean, fails on its defect
+ok   g6-secret: passes clean, fails on its defect
+PASS G7
+ALL GATES PASSED

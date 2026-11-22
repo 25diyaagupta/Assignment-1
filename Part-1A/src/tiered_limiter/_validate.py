@@ -126,8 +126,7 @@ def require_nonempty_tuple_of[T](
     for index, item in enumerate(value):
         if not isinstance(item, kind):
             msg = (
-                f"{field}: item {index} must be {kind.__name__}, "
-                f"got {_type_name(item)}"
+                f"{field}: item {index} must be {kind.__name__}, got {_type_name(item)}"
             )
             raise TypeError(msg)
         items.append(item)

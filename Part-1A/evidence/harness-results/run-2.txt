@@ -1,0 +1,16 @@
+PASS G1
+PASS G2
+All checks passed!
+unformatted: File would be reformatted
+   --> src/tiered_limiter/_validate.py:129:66
+    |
+128 |             msg = (
+    -                 f"{field}: item {index} must be {kind.__name__}, "
+    -                 f"got {_type_name(item)}"
+129 +                 f"{field}: item {index} must be {kind.__name__}, got {_type_name(item)}"
+130 |             )
+    |
+
+1 file would be reformatted, 14 files already formatted
+FAIL G3
+HARNESS FAILED at g3
