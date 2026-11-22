@@ -7,6 +7,7 @@ handle_request(request: Request, client: ModelClient, *, secrets: Sequence[str] 
 Request(text: str, now: str, timezone: str)       # validated on construction → InvalidRequest
 DecisionOutput.to_dict() -> dict                   # seven keys, per Output Schema
 DecisionOutput.to_json() -> str                    # one JSON object, no surrounding text
+parse_interpretation(text: str) -> Interpretation  # reminder_agent.interpretation
 ```
 
 - Exactly one `client.generate(...)` call per valid request; zero for an invalid one.
@@ -25,5 +26,8 @@ python -m reminder_agent  < request.json  > decision.json
 - stdin: `{"text": "...", "now": "2026-03-04T10:00:00+05:30", "timezone": "Asia/Kolkata"}`
 - stdout: one decision object. Builds `GeminiClient` from the environment (`GEMINI_API_KEY`,
   `GEMINI_MODEL`, `GEMINI_TIMEOUT_SECONDS`) and passes the key as a secret to the guard.
+- Entry point: `main(stdin, stdout, stderr, environ, client_factory) -> int` in
+  `reminder_agent/__main__.py`; `client_factory(environ)` returns a `ModelClient`
+  (`GeminiClient.from_env` in production, a fake in tests).
 - Exit codes: `0` decision written; `2` invalid request or config error; `3` service error;
   `4` invalid model output. Errors go to stderr as one line naming the error type, never the key.

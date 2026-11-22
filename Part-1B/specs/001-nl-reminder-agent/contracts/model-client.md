@@ -15,7 +15,9 @@ parsing, prompt text or decision logic in any implementation.
 - Constructor: `GeminiClient(api_key, model="gemini-2.5-flash", timeout_seconds=30.0,
   connection_factory=<HTTPSConnection factory>)`; `GeminiClient.from_env(environ)` reads
   `GEMINI_API_KEY` (required), `GEMINI_MODEL`, `GEMINI_TIMEOUT_SECONDS`.
-  `connection_factory` exists so tests inject a stub connection.
+  `connection_factory(host: str, timeout: float)` returns an object with `request(method, url,
+  body, headers)`, `getresponse()` (→ `.status`, `.read()`) and `close()`; tests inject a stub.
+  The key never appears in `repr()` or error messages.
 - Request: `POST /v1beta/models/{model}:generateContent` on host
   `generativelanguage.googleapis.com`, TLS via `ssl.create_default_context()`.
   Headers `Content-Type: application/json`, `x-goog-api-key`.

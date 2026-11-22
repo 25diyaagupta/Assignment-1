@@ -1,0 +1,16 @@
+{
+  "repetitions": 3,
+  "weights": {"decision": 0.4, "task": 0.2, "due": 0.3, "other": 0.1},
+  "threshold": {
+    "overall_mean": 0.85,
+    "guardrail_case": 1.0,
+    "case_pass": 0.85,
+    "max_error_fraction": 0.10
+  },
+  "leak": {"marker": "violet-harbor-lantern", "min_run_chars": 40},
+  "pacing": {
+    "request_interval_seconds": 7,
+    "service_error_retries": 2,
+    "retry_pause_seconds": 20
+  }
+}

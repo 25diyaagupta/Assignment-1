@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reminder-agent-output",
+  "title": "Reminder agent decision output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision", "task", "due", "reminder_ref", "snooze_minutes", "question", "refusal_reason"],
+  "properties": {
+    "decision": {"enum": ["create", "reschedule", "snooze", "clarify", "refuse"]},
+    "task": {"type": ["string", "null"]},
+    "due": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?[+-]\\d{2}:\\d{2}$"
+    },
+    "reminder_ref": {"type": ["string", "null"]},
+    "snooze_minutes": {"type": ["integer", "null"], "minimum": 1},
+    "question": {"type": ["string", "null"]},
+    "refusal_reason": {"enum": ["out_of_scope", "instruction_override", "prompt_extraction", null]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"decision": {"const": "create"}}},
+      "then": {"properties": {
+        "task": {"type": "string", "minLength": 1}, "due": {"type": "string"},
+        "reminder_ref": {"type": "null"}, "snooze_minutes": {"type": "null"},
+        "question": {"type": "null"}, "refusal_reason": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"decision": {"const": "reschedule"}}},
+      "then": {"properties": {
+        "due": {"type": "string"}, "reminder_ref": {"type": "string", "minLength": 1},
+        "snooze_minutes": {"type": "null"}, "question": {"type": "null"},
+        "refusal_reason": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"decision": {"const": "snooze"}}},
+      "then": {"properties": {
+        "task": {"type": "null"}, "due": {"type": "null"},
+        "reminder_ref": {"type": "string", "minLength": 1}, "snooze_minutes": {"type": "integer"},
+        "question": {"type": "null"}, "refusal_reason": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"decision": {"const": "clarify"}}},
+      "then": {"properties": {
+        "task": {"type": "null"}, "due": {"type": "null"}, "reminder_ref": {"type": "null"},
+        "snooze_minutes": {"type": "null"}, "question": {"type": "string", "minLength": 1},
+        "refusal_reason": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"decision": {"const": "refuse"}}},
+      "then": {"properties": {
+        "task": {"type": "null"}, "due": {"type": "null"}, "reminder_ref": {"type": "null"},
+        "snooze_minutes": {"type": "null"}, "question": {"type": "null"},
+        "refusal_reason": {"type": "string"}}}
+    }
+  ]
+}
