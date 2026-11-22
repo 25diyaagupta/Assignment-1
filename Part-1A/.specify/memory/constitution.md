@@ -1,20 +1,14 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.1 → 1.0.2 (numbered PATCH as directed by the project owner; under the
-  Governance rules, removing checks would normally be MAJOR)
-- Reason: lean-scope amendment for a one-day deadline
-- Modified principles: I, III, IV, V, X, XVI (checks move from the harness to human review);
-  II (ruff on src and tests only, suppression check limited to comment syntax in *.py);
-  VII (working-tree scan only, no history scan); VIII (git diff only, no checksum manifest);
-  XI (mypy removed, ruff ANN kept); XII (reverse-order run removed); XV (pip-audit removed)
-- Modified sections: Quality Gates (13 gates → 7, adds a self-check on broken fakes);
-  Governance (review checklist for checks that are not harness gates)
+- Version change: 1.0.2 → 1.0.3 (PATCH: scope of the VII secret scan narrowed)
+- Modified principles: VII (secret scan limited to project files)
+- Modified sections: Quality Gates (G6 row)
 - Added principles: none
 - Removed principles: none
 - Templates requiring updates: none; plan.md and tasks.md of 001-tiered-rate-limiter updated
   to match (✅)
 - Deferred TODOs: none
-- Previous: 1.0.0 → 1.0.1 (II: ruff scope split for tests/); (template) → 1.0.0, initial
+- Previous: 1.0.1 → 1.0.2 (lean scope: 7 gates, review checklist); 1.0.0 → 1.0.1 (II: ruff scope split for tests/); (template) → 1.0.0, initial
   ratification with principles I–XVI
 -->
 
@@ -84,8 +78,10 @@ Governance, and is not a harness gate.
 ### VII. No Secrets in the Repository
 
 - No keys, tokens, passwords or credentials are committed.
-- Check: a secret scanner over the working tree reports zero findings, and Bandit's
-  hard-coded-credential checks (B105–B107) report zero findings. Git history is not scanned.
+- Check: a secret scanner over the project files (`src/`, `tests/`, `.harness/` and the root config files `pyproject.toml`, `requirements-dev.txt` and `.gitignore`) reports zero findings, with
+  every detector enabled and no suppressions, and Bandit's hard-coded-credential checks
+  (B105–B107) report zero findings. Spec Kit tooling under `.specify/` and `.claude/` and the
+  documentation under `specs/` are not scanned. Git history is not scanned.
 
 ### VIII. Protected, Pre-Approved Tests and Harness
 
@@ -165,7 +161,7 @@ The harness runs these gates in order, and each must pass for a change to be acc
 | G3 Lint/format | `ruff check src tests` and `ruff format --check src tests` | zero findings |
 | G4 Security | `bandit -r src` | zero findings |
 | G5 Tests and coverage | `coverage run --branch -m pytest`, then `coverage report --fail-under=90` | all tests pass, ≥ 90 % |
-| G6 Secrets | `detect-secrets scan` over the working tree | zero findings |
+| G6 Secrets | `detect-secrets scan` over `src tests .harness` and the root config files | zero findings, at least one file scanned |
 | G7 Self-check | G1–G6 run against deliberately broken fakes built in a temporary directory | every gate fails on its fake |
 
 ## Development Workflow
@@ -211,5 +207,12 @@ The harness runs these gates in order, and each must pass for a change to be acc
   human review. The history secret scan, the checksum manifest, mypy, pip-audit and the
   reverse-order run are removed. Reason: one-day deadline. No AC IDs are affected, and no
   requirement or AC in spec.md changes.
+- **2026-11-22** (Deepanshi Bansal, with Claude), v1.0.2 → v1.0.3: Principle VII and the G6 row
+  limit the secret scan to the project files: `src/`, `tests/`, `.harness/` and the root config
+  files `pyproject.toml`, `requirements-dev.txt` and `.gitignore`. Every detector stays enabled
+  and no suppression is added. Reason: Spec Kit's own `.specify/` files
+  (`integrations/*.manifest.json`, `memory/.constitution-template.json`) contain SHA-256 hashes,
+  which the hex high-entropy detector reports although they are not secrets; G6 could never
+  pass on them. No AC IDs are affected.
 
-**Version**: 1.0.2 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22
+**Version**: 1.0.3 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22

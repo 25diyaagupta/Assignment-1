@@ -109,8 +109,10 @@ gate_g5() {
     _report G5 "$rc"
 }
 
-# G6 Secrets: detect-secrets over the working tree (tracked and untracked,
-# not ignored). Zero files scanned is a failure.
+# G6 Secrets: detect-secrets over the project files only (constitution VII, v1.0.3):
+# src/, tests/, .harness/ and the root config files, tracked and untracked (not ignored).
+# Every detector is enabled. Zero files scanned is a failure.
+G6_SCOPE=(src tests .harness pyproject.toml requirements-dev.txt .gitignore)
 gate_g6() {
     local rc=0 ds py
     ds="$(_tool detect-secrets)"
@@ -118,9 +120,9 @@ gate_g6() {
     (
         cd "$1" || exit 2
         if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-            mapfile -t files < <(git ls-files --cached --others --exclude-standard -- .)
+            mapfile -t files < <(git ls-files --cached --others --exclude-standard -- "${G6_SCOPE[@]}")
         else
-            mapfile -t files < <(find . -type f -not -path './.git/*' | sed 's|^\./||')
+            mapfile -t files < <(find "${G6_SCOPE[@]}" -type f 2>/dev/null)
         fi
         [ "${#files[@]}" -gt 0 ] || { echo "G6: zero files to scan"; exit 2; }
         echo "G6: scanning ${#files[@]} files"

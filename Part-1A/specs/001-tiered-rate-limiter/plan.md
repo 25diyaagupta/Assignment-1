@@ -62,7 +62,7 @@ grows linearly with the number of distinct `(client, tier)` pairs (no eviction i
 | IV | Injected clock | `Clock` protocol. `time` is imported only in `clock.py` (review). AC-026 and AC-032 patch `time.*` and `datetime.now`. | PASS |
 | V | ≤ 40 lines, CC ≤ 10 | Pure functions in `bucket.py` and validators in `_validate.py` keep units small. Complexity: ruff `C901` in G3. Length: review. | PASS |
 | VI | Branch coverage ≥ 90 % | G5: `coverage run --branch -m pytest`, then `coverage report --fail-under=90`, with nothing in `src/` omitted. | PASS |
-| VII | No secrets | No credentials are needed. G6 runs `detect-secrets scan` over the working tree. Git history is not scanned (v1.0.2). | PASS |
+| VII | No secrets | No credentials are needed. G6 runs `detect-secrets scan` over the project files (`src/`, `tests/`, `.harness/` and the root config files `pyproject.toml`, `requirements-dev.txt` and `.gitignore`), with every detector enabled and no suppressions (v1.0.3). Git history is not scanned. | PASS |
 | VIII | Protected tests/harness | Tagged `harness-approved`. G1 fails if `git diff --name-only harness-approved..HEAD -- tests .harness` is non-empty. | PASS |
 | IX | Spec changes via Spec Kit | Only spec.md, plan.md and tasks.md change, each with a dated change note. | PASS |
 | X | Baseline plus 2 repairs | Tagged `impl-baseline`. The number of `repair(` commits is checked at review. | PASS |
@@ -108,7 +108,7 @@ HttpOutcome, to_http, UnknownTierError, CostExceedsCapacityError
 | G3 Lint/format | `ruff check src tests` and `ruff format --check src tests` report zero findings. |
 | G4 Security | `bandit -r src` reports zero findings. |
 | G5 Tests and coverage | `coverage run --branch -m pytest`, then `coverage report --fail-under=90`. Prints the wall time. |
-| G6 Secrets | `detect-secrets scan` over the working tree reports zero findings. |
+| G6 Secrets | `detect-secrets scan` over `src/`, `tests/`, `.harness/` and the root config files `pyproject.toml`, `requirements-dev.txt` and `.gitignore` reports zero findings. Zero files scanned is a failure. |
 | G7 Self-check | `.harness/self_check.sh` builds one deliberately broken fake per gate (G1–G6) in a temporary directory and confirms that each gate fails on its fake. |
 
 ### Ruff Rule Sets (constitution II)
@@ -139,7 +139,7 @@ at the registry in task T001.
 | coverage | G5 | Measures branch coverage for the ≥ 90 % threshold (Principle VI). |
 | ruff | G3 | Lint, format, complexity (`C901`), docstrings (`D`) and annotations (`ANN`) (Principles II, V, XI, XIV). |
 | bandit | G4 | The security scan that Principle II requires. |
-| detect-secrets | G6 | Secret scan of the working tree (Principle VII). It installs with pip, so no extra binary is needed. |
+| detect-secrets | G6 | Secret scan of the project files (Principle VII). It installs with pip, so no extra binary is needed. |
 | System tools (not pip-installed): `bash`, `git`, `rg` (ripgrep) | G1, G2, G7 | `bash` runs the harness; `git` supplies the G1 diff and the throwaway repository in the G7 fake; `rg` is the G2 search. They are taken from the OS and are not pinned. |
 
 These were considered and rejected: hypothesis (a seeded generator is enough), pytest-cov
@@ -225,3 +225,7 @@ No violations; nothing to justify.
   ruff-checked. §Public API added as the source of the `__all__` list (analysis finding C1);
   module count corrected. Every FR, SC and AC is unchanged. Supersedes the first entry's G11
   and SC-004 changes. No AC IDs are affected.
+- **2026-11-22** (Deepanshi Bansal, with Claude): G6 scope limited to the project files to match
+  constitution v1.0.3. Reason: Spec Kit's `.specify/` manifests contain SHA-256 hashes that the
+  hex high-entropy detector reports, although they are not secrets. No detector is disabled and
+  no suppression is added. No AC IDs are affected.

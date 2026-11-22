@@ -72,7 +72,7 @@ break_g5_low_coverage() {
 break_g6() {
     # Built by concatenation so this script itself never contains the key.
     local fake_value="AKIA""Q7X2M9K4R8T1V6W3"
-    printf 'aws_access_key_id = %s\n' "$fake_value" >"$1/notes.txt"
+    printf 'aws_access_key_id = %s\n' "$fake_value" >"$1/src/fakepkg/credentials.txt"
 }
 
 # check <gate function> <defect function> <label>

@@ -77,14 +77,14 @@ code.
   - `gate_g3` lint: `ruff check src tests` and `ruff format --check src tests`;
   - `gate_g4` security: `bandit -r src`;
   - `gate_g5` tests and coverage: `coverage run --branch -m pytest`, then `coverage report --fail-under=90`; prints the wall time;
-  - `gate_g6` runs `detect-secrets scan` over the working tree and fails if `results` is not empty.
+  - `gate_g6` runs `detect-secrets scan` over `src/`, `tests/`, `.harness/` and the root config files `pyproject.toml`, `requirements-dev.txt` and `.gitignore` (tracked and untracked, not ignored), with every detector enabled. It fails if `results` is not empty or if zero files are scanned.
 - [X] T009 [P] Create `.harness/self_check.sh` (gate G7). It sources `gates.sh`, builds one deliberately broken fake per gate in a `mktemp -d` directory (never committed), runs that gate against it, and fails unless every gate fails on its fake:
   - G1: a throwaway `git init` repository tagged `harness-approved`, then a committed edit under `tests/`;
   - G2: a `*.py` file with a `# noqa` comment;
   - G3: a `src/` module with an unused import;
   - G4: a `src/` module that calls `eval` on input;
   - G5: a package with one failing test, and a second package whose tests leave branch coverage below 90 %;
-  - G6: a text file holding a fake AWS-style access key. Build the key by string concatenation in the script, so G6 does not flag `self_check.sh` itself.
+  - G6: a text file under `src/` holding a fake AWS-style access key (inside the G6 scope). Build the key by string concatenation in the script, so G6 does not flag `self_check.sh` itself.
 - [X] T010 Create `.harness/run.sh`, which sources `gates.sh`, runs G1–G6 on the repository root and then `self_check.sh` (G7). It prints `PASS/FAIL Gn` for each gate and `ALL GATES PASSED`, and exits non-zero on the first failure.
 
 **Checkpoint**: `.harness/self_check.sh` passes when run on its own (every gate fails on its fake). `.harness/run.sh` runs and stops at G5, because no tests exist yet.
@@ -289,3 +289,6 @@ Polish:   T037 README.md, T038 CLAUDE.md
 - **2026-11-22** (Deepanshi Bansal, with Claude): reworded the `gate_g6` line in T008. Reason:
   detect-secrets' keyword heuristic flagged the old wording as a secret, which made G6 fail on
   tasks.md itself; a reword avoids an allowlist pragma. Meaning unchanged. No AC IDs are affected.
+- **2026-11-22** (Deepanshi Bansal, with Claude): T008 `gate_g6` and the T009 G6 fake follow
+  the constitution v1.0.3 scan scope (project files only). Reason: Spec Kit's `.specify/` files
+  contain SHA-256 hashes that are not secrets. No AC IDs are affected.
