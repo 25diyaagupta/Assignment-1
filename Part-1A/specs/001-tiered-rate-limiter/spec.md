@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-22
 
-**Status**: Draft
+**Status**: Approved
 
 **Input**: User description: "Tiered token-bucket rate limiter (Python library plus a function that
 maps results to HTTP 200/429 with Retry-After)."
@@ -264,3 +264,29 @@ outputs.
     AC-015 kept).
   - Q2 → A: not thread-safe; the caller serialises access (FR-012).
   - Q3 → A: a cost above capacity raises an error (AC-024, new FR-013).
+
+## Addendum: review additions (2026-11-22)
+
+### Added Functional Requirements
+
+- **FR-014**: Capacity and request cost MUST be whole numbers of type int. Refill rates, clock readings and reported waits MUST be exact rationals (int or Fraction). float, bool, strings and None MUST be rejected for any of these fields, with an error naming the field.
+- **FR-015**: The limiter MUST offer a read-only inspection function that returns a client's current balance for each limit of its tier at a given clock reading, without changing any balance.
+- **FR-016**: Client keys and tier names MUST be non-empty strings.
+
+### Added Acceptance Criteria
+
+- **AC-027**: Given the AC-009 scenario after the denial at t = 2, when balances are inspected at t = 2, then limit A holds exactly 5 and limit B holds exactly 1/3.
+- **AC-028**: Given True or False as a capacity, rate or cost, when configured or evaluated, then it is rejected and no tokens are taken.
+- **AC-029**: Given a string or None as a capacity, rate or cost, then it is rejected with an error naming the field.
+- **AC-030**: Given a capacity of 5/2 or a float such as 2.5, then it is rejected. Given a cost of 2.0 (a float), then it is rejected even though it is a whole value.
+- **AC-031**: Given an empty client key, an empty tier name, or a non-string for either, then it is rejected and no tokens are taken.
+- **AC-032**: Given time.time, time.monotonic and datetime.now patched to raise an error when called, when the limiter makes decisions with an injected clock, then every decision succeeds and none of the patched functions is called.
+
+### Success criteria notes
+
+- SC-005 is a reported metric and does not gate acceptance.
+- SC-001 is checked by a property test over the scripted run.
+
+### Change Notes entry
+
+- **2026-11-22** (Deepanshi Bansal): added FR-014 to FR-016 and AC-027 to AC-032 after reviewing gaps in testability, numeric exactness and input validation. Status set to Approved. Reason: I founf the new rules more effective
