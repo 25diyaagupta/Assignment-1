@@ -49,7 +49,7 @@ its own.
   - `[tool.pytest.ini_options]` that registers the `ac` marker and sets `--strict-markers`.
 
   Also create `tests/ruff.toml` with `extend = "../pyproject.toml"` and a `[lint]` `select` of E, F, W, I, B, C90, UP, SIM only, as plan.md §Ruff Rule Sets records. It has no `ignore`, `extend-ignore`, `per-file-ignores` or `exclude` entries.
-- [ ] T003 [P] Create the package skeleton `src/tiered_limiter/__init__.py` with a module docstring and `__all__: list[str] = []`. No exports yet, so the tests fail on import.
+- [X] T003 [P] Create the package skeleton `src/tiered_limiter/__init__.py` with a module docstring and `__all__: list[str] = []`. No exports yet, so the tests fail on import.
 - [X] T004 [P] Add the virtual environment, cache and coverage entries (`.venv/`, `__pycache__/`, `.coverage`, `.ruff_cache/`, `.pytest_cache/`) to `.gitignore`.
 - [ ] T005 Install the tools: `pip install -r requirements-dev.txt && pip install -e .`. Record the `pip freeze` output in the commit message, and confirm that `ruff check src tests` passes on the skeleton.
 
@@ -144,12 +144,12 @@ code.
 
 **Independent Test**: `pytest tests/test_us1_token_bucket.py`
 
-- [ ] T020 [P] [US1] Implement the `Clock` protocol and `MonotonicClock` in `src/tiered_limiter/clock.py`, following research.md R2. It is the only module that imports `time`, and `MonotonicClock.now` returns the reading as a `Fraction`, never a `float`.
-- [ ] T021 [P] [US1] Implement the validators in `src/tiered_limiter/_validate.py`: `require_int(field, value)`, `require_rational(field, value)`, `require_positive(field, value)`, `require_nonempty_str(field, value)`. Each one excludes `bool`, and error messages start with `"<field>: "`, following research.md R6.
-- [ ] T022 [P] [US1] Implement `UnknownTierError` and `CostExceedsCapacityError`, both subclasses of `ValueError`, in `src/tiered_limiter/errors.py`.
-- [ ] T023 [US1] Implement `Limit` in `src/tiered_limiter/config.py` as a frozen dataclass that validates in `__post_init__`. It covers `data-model.md Limit.capacity` and `data-model.md Limit.refill_rate`. Depends on T021.
-- [ ] T024 [US1] Implement `BucketState` and the pure functions `refill`, `consume` and `wait_for` in `src/tiered_limiter/bucket.py`, following the data-model.md BucketState state transitions. They cover `data-model.md BucketState.balance` and `data-model.md BucketState.last_seen`.
-- [ ] T025 [US1] Implement `Decision`, plus `TieredLimiter.__init__` and `acquire` for single-limit tiers, in `src/tiered_limiter/limiter.py`. This includes:
+- [X] T020 [P] [US1] Implement the `Clock` protocol and `MonotonicClock` in `src/tiered_limiter/clock.py`, following research.md R2. It is the only module that imports `time`, and `MonotonicClock.now` returns the reading as a `Fraction`, never a `float`.
+- [X] T021 [P] [US1] Implement the validators in `src/tiered_limiter/_validate.py`: `require_int(field, value)`, `require_rational(field, value)`, `require_positive(field, value)`, `require_nonempty_str(field, value)`. Each one excludes `bool`, and error messages start with `"<field>: "`, following research.md R6.
+- [X] T022 [P] [US1] Implement `UnknownTierError` and `CostExceedsCapacityError`, both subclasses of `ValueError`, in `src/tiered_limiter/errors.py`.
+- [X] T023 [US1] Implement `Limit` in `src/tiered_limiter/config.py` as a frozen dataclass that validates in `__post_init__`. It covers `data-model.md Limit.capacity` and `data-model.md Limit.refill_rate`. Depends on T021.
+- [X] T024 [US1] Implement `BucketState` and the pure functions `refill`, `consume` and `wait_for` in `src/tiered_limiter/bucket.py`, following the data-model.md BucketState state transitions. They cover `data-model.md BucketState.balance` and `data-model.md BucketState.last_seen`.
+- [X] T025 [US1] Implement `Decision`, plus `TieredLimiter.__init__` and `acquire` for single-limit tiers, in `src/tiered_limiter/limiter.py`. This includes:
   - lazy full state keyed by `(client_key, tier_name)`, following research.md R5;
   - one `clock.now()` read per call;
   - validation of `data-model.md` Request inputs `cost` and `clock reading`;
@@ -167,9 +167,9 @@ code.
 
 **Independent Test**: `pytest tests/test_us2_tiers.py`
 
-- [ ] T026 [US2] Implement `Tier` and `LimiterConfig` in `src/tiered_limiter/config.py`. They cover `data-model.md Tier.name`, `data-model.md Tier.limits` and `data-model.md LimiterConfig.tiers`, including the unique-name check. Depends on T023.
-- [ ] T027 [US2] Extend `TieredLimiter.acquire` in `src/tiered_limiter/limiter.py` to layered limits, following research.md R4. It refills all limits, then either allows and consumes from all of them, or denies, consumes nothing, and sets `retry_after = max` over the blocking limits. It raises `UnknownTierError`, covering `data-model.md` Request inputs `tier_name`.
-- [ ] T028 [US2] Implement `TieredLimiter.inspect` in `src/tiered_limiter/limiter.py`. It covers FR-015: it computes refill at `clock.now()` without storing it, never creates state, and returns full capacities for a client it has not seen.
+- [X] T026 [US2] Implement `Tier` and `LimiterConfig` in `src/tiered_limiter/config.py`. They cover `data-model.md Tier.name`, `data-model.md Tier.limits` and `data-model.md LimiterConfig.tiers`, including the unique-name check. Depends on T023.
+- [X] T027 [US2] Extend `TieredLimiter.acquire` in `src/tiered_limiter/limiter.py` to layered limits, following research.md R4. It refills all limits, then either allows and consumes from all of them, or denies, consumes nothing, and sets `retry_after = max` over the blocking limits. It raises `UnknownTierError`, covering `data-model.md` Request inputs `tier_name`.
+- [X] T028 [US2] Implement `TieredLimiter.inspect` in `src/tiered_limiter/limiter.py`. It covers FR-015: it computes refill at `clock.now()` without storing it, never creates state, and returns full capacities for a client it has not seen.
 
 **Checkpoint (observe only)**: Record the pass/fail count of `pytest tests/test_us2_tiers.py`.
 
@@ -181,7 +181,7 @@ code.
 
 **Independent Test**: `pytest tests/test_us3_http_mapping.py`
 
-- [ ] T029 [P] [US3] Implement `HttpOutcome` and `to_http` in `src/tiered_limiter/http_mapping.py`, following research.md R7. They cover `data-model.md HttpOutcome.status` and `data-model.md HttpOutcome.headers`, using `max(1, math.ceil(retry_after))`.
+- [X] T029 [P] [US3] Implement `HttpOutcome` and `to_http` in `src/tiered_limiter/http_mapping.py`, following research.md R7. They cover `data-model.md HttpOutcome.status` and `data-model.md HttpOutcome.headers`, using `max(1, math.ceil(retry_after))`.
 
 **Checkpoint (observe only)**: Record the pass/fail count of `pytest tests/test_us3_http_mapping.py`.
 
@@ -193,8 +193,8 @@ code.
 
 **Independent Test**: `pytest tests/test_us4_validation.py`
 
-- [ ] T030 [US4] Complete input validation at the start of `TieredLimiter.acquire` and `inspect` in `src/tiered_limiter/limiter.py`. Validate `data-model.md` Request inputs `client_key`, `tier_name` and `cost`, including the `CostExceedsCapacityError` check against every limit, before any state is read or written.
-- [ ] T031 [US4] Make `src/tiered_limiter/config.py` reject a `Tier.limits` item that is not a `Limit` (AC-036, `TypeError`), and an empty `LimiterConfig.tiers` (AC-035, `ValueError`), as `data-model.md Tier.limits` and `data-model.md LimiterConfig.tiers` define. Check the error type and message prefix against contracts/public-api.md §Errors.
+- [X] T030 [US4] Complete input validation at the start of `TieredLimiter.acquire` and `inspect` in `src/tiered_limiter/limiter.py`. Validate `data-model.md` Request inputs `client_key`, `tier_name` and `cost`, including the `CostExceedsCapacityError` check against every limit, before any state is read or written.
+- [X] T031 [US4] Make `src/tiered_limiter/config.py` reject a `Tier.limits` item that is not a `Limit` (AC-036, `TypeError`), and an empty `LimiterConfig.tiers` (AC-035, `ValueError`), as `data-model.md Tier.limits` and `data-model.md LimiterConfig.tiers` define. Check the error type and message prefix against contracts/public-api.md §Errors.
 
 **Checkpoint (observe only)**: Record the pass/fail count of `pytest tests/test_us4_validation.py`.
 
@@ -206,7 +206,7 @@ code.
 
 **Independent Test**: `pytest tests/test_us5_determinism.py tests/test_public_api.py`
 
-- [ ] T032 [US5] Populate `__all__` and the re-exports in `src/tiered_limiter/__init__.py` with exactly the 11 names in plan.md §Public API. Add the module docstring, which must say "not thread-safe" (FR-012).
+- [X] T032 [US5] Populate `__all__` and the re-exports in `src/tiered_limiter/__init__.py` with exactly the 11 names in plan.md §Public API. Add the module docstring, which must say "not thread-safe" (FR-012).
 
 **Checkpoint (observe only)**: Record the pass/fail count of the US5 tests.
 

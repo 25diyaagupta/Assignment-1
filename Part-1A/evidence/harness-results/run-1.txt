@@ -1,0 +1,6 @@
+WARN G1: tag harness-approved does not exist yet; integrity not checked
+PASS G1
+PASS G2
+G3: src/ not found
+FAIL G3
+HARNESS FAILED at g3
