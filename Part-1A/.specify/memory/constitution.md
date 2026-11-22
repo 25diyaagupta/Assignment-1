@@ -1,13 +1,15 @@
 <!--
 Sync Impact Report
-- Version change: (template) → 1.0.0
-- Modified principles: all template placeholders replaced (initial ratification)
-- Added principles: I–X (user-supplied), XI–XVI (additional measurable standards)
-- Added sections: Quality Gates (harness), Development Workflow, Governance
+- Version change: 1.0.0 → 1.0.1 (PATCH, as directed by the project owner)
+- Modified principles: II (Zero Lint and Security Findings) — ruff scope split: full rule set
+  for project code, smaller rule set recorded in plan.md for tests/
+- Added principles: none
+- Added sections: Change Notes
 - Removed sections: none
-- Templates requiring updates: none modified by this command; plan-template "Constitution Check"
-  reads this file at runtime (✅ no edit needed)
+- Templates requiring updates: none; plan.md and tasks.md of 001-tiered-rate-limiter updated
+  to match (✅)
 - Deferred TODOs: none
+- Previous: (template) → 1.0.0, initial ratification with principles I–XVI
 -->
 
 # Tiered Token-Bucket Rate Limiter Constitution
@@ -31,7 +33,12 @@ gates pass.
 
 ### II. Zero Lint and Security Findings, No Suppressions
 
-- `ruff check .` and `ruff format --check .` report zero findings.
+- `ruff check .` and `ruff format --check .` report zero findings. Files in `src/`,
+  `.harness/` and `bench/` are checked with the full rule set in `pyproject.toml`. Files in
+  `tests/` are checked with a smaller rule set, configured in `tests/ruff.toml` as its own
+  `select` list and recorded with a justification for each omitted rule family in `plan.md`.
+  That file may only select fewer rule families; it must not use `ignore`, `extend-ignore`,
+  `per-file-ignores` or `exclude`.
 - `bandit -r src` reports zero findings at every severity and confidence level.
 - The repository has no `noqa`, `nosec`, `type: ignore`, `pragma: no cover` or
   `# fmt: off` comments, and no `ignore`, `extend-ignore`, `per-file-ignores`, `skips` or
@@ -187,4 +194,13 @@ The harness runs these gates in order, and each must pass for a change to be acc
 - No implementing agent may amend this constitution. Amendments need human approval.
 - Every review checks that all harness gates are green and that Principles VIII and X hold.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22
+## Change Notes
+
+- **2026-11-22** (Deepanshi Bansal, with Claude), v1.0.0 → v1.0.1: Principle II now runs ruff
+  with the full rule set on project code and a smaller, documented rule set on `tests/`
+  (`/speckit-analyze` finding D1, option a). Reason: the full set includes rules that conflict
+  with ordinary pytest code (`S101` flags every `assert`, `PLR2004` flags the literal expected
+  values the ACs specify), and the no-suppression rule left no compliant way to write the tests.
+  No AC IDs are affected.
+
+**Version**: 1.0.1 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22

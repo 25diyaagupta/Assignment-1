@@ -264,6 +264,13 @@ outputs.
     AC-015 kept).
   - Q2 → A: not thread-safe; the caller serialises access (FR-012).
   - Q3 → A: a cost above capacity raises an error (AC-024, new FR-013).
+- **2026-11-22** (Deepanshi Bansal, with Claude): added AC-033 to AC-036 to the Added Acceptance
+  Criteria after `/speckit-analyze` findings C1, C2 and A1. Reason: constitution III needs an AC
+  for every planned test. AC-033 backs constitution XIV (public API surface), AC-034 makes SC-001
+  testable as a bound checked over every pair of accepted requests, and AC-035 and AC-036 give
+  the empty tier list (`ValueError`) and a non-`Limit` entry (`TypeError`) their own ACs, as
+  constitution XIII requires. The exception types match contracts/public-api.md §Errors and
+  data-model.md. Affected: AC-033, AC-034, AC-035, AC-036.
 
 ## Addendum: review additions (2026-11-22)
 
@@ -281,6 +288,10 @@ outputs.
 - **AC-030**: Given a capacity of 5/2 or a float such as 2.5, then it is rejected. Given a cost of 2.0 (a float), then it is rejected even though it is a whole value.
 - **AC-031**: Given an empty client key, an empty tier name, or a non-string for either, then it is rejected and no tokens are taken.
 - **AC-032**: Given time.time, time.monotonic and datetime.now patched to raise an error when called, when the limiter makes decisions with an injected clock, then every decision succeeds and none of the patched functions is called.
+- **AC-033**: Given the installed package, when `tiered_limiter.__all__` is read, then its set of names equals exactly the name set in `contracts/public-api.md` (11 names), with no name missing and no extra name.
+- **AC-034**: Given a seeded scripted run of 10,000 requests across 100 clients, when it completes, then for every client, every limit of its tier, and every pair of that client's accepted requests at times t_i ≤ t_j, the total cost accepted at times in [t_i, t_j] is at most capacity + rate × (t_j − t_i). The check reports 0 violations.
+- **AC-035**: Given a `LimiterConfig` built with an empty tier list, when it is constructed, then a `ValueError` whose message starts with `tiers:` is raised.
+- **AC-036**: Given a `Tier` whose limits contain an entry that is not a `Limit` (for example the tuple `(5, 1)` or `None`), when it is constructed, then a `TypeError` whose message starts with `limits:` is raised.
 
 ### Success criteria notes
 
@@ -289,4 +300,4 @@ outputs.
 
 ### Change Notes entry
 
-- **2026-11-22** (Deepanshi Bansal): added FR-014 to FR-016 and AC-027 to AC-032 after reviewing gaps in testability, numeric exactness and input validation. Status set to Approved. Reason: I founf the new rules more effective
+- **2026-11-22** (Deepanshi Bansal): added FR-014 to FR-016 and AC-027 to AC-032 after reviewing gaps in testability, numeric exactness and input validation. Status set to Approved. Reason: n Python, True is also the integer 1, so it could slip through as a cost or capacity without a specific test. A float 2.0 looks whole but isn’t an int

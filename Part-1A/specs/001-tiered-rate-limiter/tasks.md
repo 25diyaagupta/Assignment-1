@@ -45,6 +45,8 @@ its own.
   - `[tool.mypy] strict = true`;
   - `[tool.coverage]` with `branch = true`, `source = ["src"]`, `fail_under = 90` and no omit entries;
   - `[tool.pytest.ini_options]` that registers the `ac` marker and sets `--strict-markers`.
+
+  Also create `tests/ruff.toml` with `extend = "../pyproject.toml"` and a `[lint]` `select` of E, F, W, I, B, C90, UP, SIM only, as plan.md §Ruff Rule Sets records (constitution II, v1.0.1). It has no `ignore`, `extend-ignore`, `per-file-ignores` or `exclude` entries.
 - [ ] T003 [P] Create the package skeleton `src/tiered_limiter/__init__.py` with a module docstring and `__all__: list[str] = []`. No exports yet, so the tests fail on import.
 - [ ] T004 [P] Add the virtual environment, cache and coverage entries (`.venv/`, `__pycache__/`, `.coverage`, `.mypy_cache/`, `.ruff_cache/`, `.pytest_cache/`) to `.gitignore`.
 - [ ] T005 Install the tools: `pip install -r requirements-dev.txt && pip install -e .`. Record the `pip freeze` output in the commit message, and confirm that `ruff check .` and `mypy --strict src` pass on the skeleton.
@@ -58,17 +60,20 @@ code.
 
 **⚠️ CRITICAL**: No test or story work begins until this phase is complete.
 
-- [ ] T006 Amend `specs/001-tiered-rate-limiter/spec.md` (constitution IX) by adding:
-  - **AC-033**: `tiered_limiter.__all__` equals exactly the name set in `contracts/public-api.md`;
-  - **AC-034**: in the seeded scripted run of 10,000 requests across 100 clients, no client's accepted cost in any window T exceeds capacity + rate × T for any limit;
-  - a dated Change Notes entry with a non-empty reason;
-  - a filled-in empty `Reason:` in the 2026-11-22 addendum entry.
+- [X] T006 Amend `specs/001-tiered-rate-limiter/spec.md` (constitution IX). Done 2026-11-22: AC-033 to AC-036 added with a dated Change Notes entry, and the `Reason:` in the 2026-11-22 addendum entry is filled in.
+  - **AC-033**: public API surface equals contracts/public-api.md;
+  - **AC-034**: windowed accepted-cost bound for every pair of accepted requests;
+  - **AC-035**: empty tier list raises `ValueError`;
+  - **AC-036**: non-`Limit` entry in `Tier.limits` raises `TypeError`.
 - [ ] T007 Create `tests/conftest.py` with:
   - a `FakeClock` with a settable `t` (int or Fraction) and a `now()` method;
   - a `fake_clock` fixture;
   - the example tier fixtures `free` (Limit(5, 1)), `pro` (Limit(20, 10)) and `layered` (Limit(5, 5), Limit(10, Fraction(1, 6))), taken from spec.md User Scenarios;
   - a `pytest_collection_modifyitems` hook that reverses item order when the environment variable `HARNESS_REVERSE=1` is set.
-- [ ] T008 [P] Create `.harness/check_suppressions.sh` (gate G2). It runs `rg` for `noqa|nosec|type: ignore|pragma: no cover|fmt: off` across the repository, and for `ignore|extend-ignore|per-file-ignores|skips|omit` keys in `pyproject.toml`. It exits 1 on any match and excludes `.venv/`, `specs/` and `.specify/`.
+- [ ] T008 [P] Create `.harness/check_suppressions.sh` (gate G2). It:
+  - runs `rg --glob '*.py' -e '#\s*(noqa|nosec|type:\s*ignore|pragma:\s*no\s*cover|fmt:\s*(off|skip))'` across the repository, excluding `.venv/`. It matches only comment syntax in `*.py` files, so documentation and this script do not match;
+  - runs `rg -e '^\s*(ignore|extend-ignore|per-file-ignores|skips|omit|exclude)\s*='` over `pyproject.toml` and `tests/ruff.toml`;
+  - exits 1 on any match.
 - [ ] T009 [P] Create `.harness/check_clock_purity.py` (gate G6). It is an AST scan of `src/` that fails on:
   - any `import time`, `from time`, `datetime` or `random` outside `src/tiered_limiter/clock.py`;
   - any use of the name `float` anywhere in `src/`.
@@ -83,7 +88,7 @@ code.
 - [ ] T015 Create `.harness/run.sh`, which runs G1–G13 in order (the constitution's Quality Gates table):
   - G1 protection;
   - G2 suppressions;
-  - G3 `ruff check .` and `ruff format --check .`;
+  - G3 `ruff check .` and `ruff format --check .` (ruff applies `tests/ruff.toml` to `tests/` and `pyproject.toml` elsewhere);
   - G4 `bandit -r src`;
   - G5 `mypy --strict src`;
   - G6 clock purity;
@@ -91,7 +96,7 @@ code.
   - G8 traceability;
   - G9 pytest in normal order and with `HARNESS_REVERSE=1`, each under 10 s;
   - G10 `coverage run --branch -m pytest` and `coverage report --fail-under=90`;
-  - G11 `detect-secrets scan` over the tree, plus `git log -p` piped through `detect-secrets scan --string`, with zero findings;
+  - G11 `detect-secrets scan` over the working tree, then a history scan of **every** commit in `git rev-list --all`: for each commit, `git archive <sha> | tar -x -C <tmpdir>`, run `detect-secrets scan --all-files <tmpdir>`, and add the commit's file count (`git ls-tree -r --name-only <sha> | wc -l`) to a running total. It fails on any finding, and fails if the history scan covered zero commits or zero files. It prints the commit and file totals;
   - G12 dependencies plus `pip-audit -r requirements-dev.txt`;
   - G13 repair budget.
 
@@ -123,7 +128,7 @@ code.
 
 ### User Story 4 tests (P2)
 
-- [ ] T019 [P] [US4] Write tests for AC-018 to AC-024 and AC-028 to AC-031 in `tests/test_us4_validation.py`. Parametrise over the invalid values in spec.md, and check:
+- [ ] T019 [P] [US4] Write tests for AC-018 to AC-024, AC-028 to AC-031, AC-035 and AC-036 in `tests/test_us4_validation.py`. Parametrise over the invalid values in spec.md, and check:
   - the exception type (`TypeError` vs `ValueError` vs `UnknownTierError` / `CostExceedsCapacityError`), following contracts/public-api.md §Errors;
   - that the message starts with the field name;
   - that `inspect` shows no tokens were taken.
@@ -131,7 +136,8 @@ code.
 ### User Story 5 tests (P2) and cross-cutting
 
 - [ ] T020 [P] [US5] Write tests for AC-025, AC-026, AC-032 and AC-034 in `tests/test_us5_determinism.py`:
-  - a seeded `random.Random(2026)` scripted generator for 1,000 inputs (AC-025) and 10,000 inputs across 100 clients (AC-034, a sliding-window bound check);
+  - a seeded `random.Random(2026)` scripted generator for 1,000 inputs (AC-025). The test loops 100 times, running the sequence on a fresh limiter each time, and asserts that all 100 decision sequences and their `repr()` bytes are identical (also backs SC-003);
+  - 10,000 inputs across 100 clients for AC-034: for every client, every limit and every pair of accepted requests at t_i ≤ t_j, assert the cost accepted in [t_i, t_j] is at most capacity + rate × (t_j − t_i), in exact `Fraction` arithmetic;
   - `monkeypatch` making `time.time`, `time.monotonic`, `time.monotonic_ns` and `datetime.datetime.now` raise, for AC-026 and AC-032.
 - [ ] T021 [P] [US5] Write a test for AC-033 in `tests/test_public_api.py`. It asserts `set(tiered_limiter.__all__)` equals the 11 names in contracts/public-api.md.
 - [ ] T022 Run `pytest` and confirm that **every** test fails (or errors on import) and none passes. Paste the failure counts into the commit message. Then run `.harness/check_traceability.py` and confirm it reports zero orphans.
@@ -203,7 +209,7 @@ code.
 **Independent Test**: `pytest tests/test_us4_validation.py`
 
 - [ ] T035 [US4] Complete input validation at the start of `TieredLimiter.acquire` and `inspect` in `src/tiered_limiter/limiter.py`. Validate `data-model.md` Request inputs `client_key`, `tier_name` and `cost`, including the `CostExceedsCapacityError` check against every limit, before any state is read or written.
-- [ ] T036 [US4] Make `src/tiered_limiter/config.py` reject a `Tier.limits` item that is not a `Limit`, and an empty `LimiterConfig.tiers`, as `data-model.md Tier.limits` and `data-model.md LimiterConfig.tiers` define. Check the error type and message prefix against contracts/public-api.md §Errors.
+- [ ] T036 [US4] Make `src/tiered_limiter/config.py` reject a `Tier.limits` item that is not a `Limit` (AC-036, `TypeError`), and an empty `LimiterConfig.tiers` (AC-035, `ValueError`), as `data-model.md Tier.limits` and `data-model.md LimiterConfig.tiers` define. Check the error type and message prefix against contracts/public-api.md §Errors.
 
 **Checkpoint (observe only)**: Record the pass/fail count of `pytest tests/test_us4_validation.py`.
 
@@ -236,8 +242,9 @@ code.
 ## Phase 11: Polish & Cross-Cutting Concerns
 
 - [ ] T043 [P] Write `README.md` covering installation, the quickstart example, the not-thread-safe warning and the exact-numbers rule (`int` / `Fraction` only). Link to contracts/public-api.md.
-- [ ] T044 [P] Create `CLAUDE.md` (under 200 lines, as organisation policy requires) with the build, test and harness commands, the module map from plan.md, and the conventions: AC markers, protected paths, repair rules.
-- [ ] T045 Run the quickstart.md smoke scenario by hand, then do a final `.harness/run.sh` and confirm `ALL GATES PASSED`.
+- [ ] T044 Add the SC-004 example to `README.md`, between `<!-- SC-004:begin -->` and `<!-- SC-004:end -->`: a fenced Python block that defines a new tier, builds a `TieredLimiter`, decides one request and maps it with `to_http`. Create `bench/check_readme_example.py`, which extracts that block, counts its non-blank, non-comment lines (imports included), exits 1 if the count is above 10 or the block is missing, then runs the block and exits 1 if it raises. It prints `SC-004: <n> lines`. It is not a test and not a gate. Depends on T043.
+- [ ] T045 [P] Create `CLAUDE.md` (under 200 lines, as organisation policy requires) with the build, test and harness commands, the module map from plan.md, and the conventions: AC markers, protected paths, repair rules.
+- [ ] T046 Run the quickstart.md smoke scenario by hand and `python bench/check_readme_example.py`, then do a final `.harness/run.sh` and confirm `ALL GATES PASSED`.
 
 ---
 
@@ -266,7 +273,7 @@ Phase 2:  T008, T009, T010, T011, T012, T013, T014 (separate .harness files)
 Phase 3:  T016, T017, T018, T019, T020, T021 (separate test files)
 US1:      T025 clock.py, T026 _validate.py, T027 errors.py, then T028 → T029 → T030
 US2/US3:  T034 http_mapping.py runs in parallel with T031–T033
-Polish:   T043 README.md, T044 CLAUDE.md
+Polish:   T043 README.md, T045 CLAUDE.md, then T044 after T043
 ```
 
 ## Implementation Strategy
@@ -276,3 +283,13 @@ Polish:   T043 README.md, T044 CLAUDE.md
   generated implementation", so the MVP is a review milestone, not a separate baseline.
 - **Increment 2 = US4 + US5**: validation and determinism.
 - **Repair budget**: 2 attempts in total across all gates (T041 and T042), then human review.
+
+## Change Notes
+
+- **2026-11-22** (Deepanshi Bansal, with Claude): applied `/speckit-analyze` fixes. Reason: align
+  the tasks with the analysis findings, plan.md and constitution v1.0.1. Changes: T002 adds
+  `tests/ruff.toml` (D1); T008 matches only comment syntax in `*.py` files (D2); T015 G11 scans
+  every commit and fails on zero files (U1); T006 marked done with AC-033 to AC-036, and T019,
+  T020 and T036 cite them (C1, C2, A1); T020 loops the determinism run 100 times (I1); new T044
+  adds the SC-004 README example and line-count check, and the old T044 and T045 become T045 and
+  T046 (C3). Affected: AC-025, AC-033, AC-034, AC-035, AC-036.
