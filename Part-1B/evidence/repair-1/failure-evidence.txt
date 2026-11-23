@@ -1,0 +1,40 @@
+PASS G1 Integrity
+PASS G2 Suppressions
+All checks passed!
+29 files already formatted
+PASS G3 Lint/format
+PASS G4 Security
+........................................................................ [ 52%]
+...........F.....................................................        [100%]
+=================================== FAILURES ===================================
+_____________ test_duration_across_dst_uses_offset_at_due_instant ______________
+
+fake_client = <function fake_client.<locals>.<lambda> at 0x71d038e1b240>
+
+    @pytest.mark.covers("INV-007", "PROP-002")
+    def test_duration_across_dst_uses_offset_at_due_instant(fake_client):
+        reply = interp(decision="create", task="check the oven", relative_minutes=24 * 60)
+        result, _ = create_output(fake_client, reply, now=NY_DST_NOW, tz=NEW_YORK)
+>       assert result.to_dict()["due"] == "2026-03-08T13:00:00-04:00"
+E       AssertionError: assert '2026-03-08T12:00:00-04:00' == '2026-03-08T13:00:00-04:00'
+E         
+E         - 2026-03-08T13:00:00-04:00
+E         ?             ^
+E         + 2026-03-08T12:00:00-04:00
+E         ?             ^
+
+tests/test_us1_create.py:116: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_us1_create.py::test_duration_across_dst_uses_offset_at_due_instant
+1 failed, 136 passed in 0.57s
+FAIL G5 Unit tests
+G6: 43 files scanned
+PASS G6 Secrets
+PASS G7 Clock
+G8: dataset and traceability clean
+PASS G8 Dataset
+PASS oracle: counts {'pass': 30, 'fail': 0, 'error': 0}
+PASS break_l1_structure: 6 cases flagged L1
+PASS break_l2_invariant: 11 cases flagged INV-007
+PASS break_l2_property: 12 cases flagged PROP-004
+PASS break_l3_semantic: 10 cases lost points without L1/L2 violations

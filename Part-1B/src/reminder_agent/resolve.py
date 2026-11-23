@@ -39,7 +39,10 @@ def _attach_zone(wall: datetime, zone: ZoneInfo) -> Resolution:
 def resolve_due(interp: Interpretation, now: datetime, zone: ZoneInfo) -> Resolution:
     """Resolve the interpretation's time against the injected ``now`` and ``zone``."""
     if interp.relative_minutes is not None:
-        resolution = Resolution(due=now + timedelta(minutes=interp.relative_minutes))
+        # Add elapsed time in UTC: aware-datetime arithmetic in a zone is wall-clock
+        # and would ignore a DST transition between now and the due instant.
+        elapsed = timedelta(minutes=interp.relative_minutes)
+        resolution = Resolution(due=now.astimezone(UTC) + elapsed)
     elif interp.due_local is not None:
         resolution = _attach_zone(datetime.fromisoformat(interp.due_local), zone)
     else:

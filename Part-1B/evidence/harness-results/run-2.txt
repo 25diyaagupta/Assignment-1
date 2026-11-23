@@ -1,0 +1,41 @@
+PASS G1 Integrity
+PASS G2 Suppressions
+All checks passed!
+29 files already formatted
+PASS G3 Lint/format
+PASS G4 Security
+........................................................................ [ 52%]
+.................................................................        [100%]
+137 passed in 0.51s
+Name                                   Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------------------------------------
+src/reminder_agent/__init__.py             5      0      0      0   100%
+src/reminder_agent/__main__.py            46      2      4      1    94%   63, 73
+src/reminder_agent/agent.py               58      0     22      0   100%
+src/reminder_agent/calendar_facts.py      28      0      2      0   100%
+src/reminder_agent/errors.py               8      0      0      0   100%
+src/reminder_agent/guard.py               25      1     10      1    94%   22
+src/reminder_agent/interpretation.py      65      0     24      0   100%
+src/reminder_agent/model_client.py        82      6     14      2    92%   51-52, 76, 115-116, 118
+src/reminder_agent/output.py              37      5     12      5    80%   42, 49, 51, 55, 58
+src/reminder_agent/ports.py                4      0      0      0   100%
+src/reminder_agent/prompt.py              17      0      2      0   100%
+src/reminder_agent/request.py             37      2      8      2    91%   12, 42
+src/reminder_agent/resolve.py             35      0     12      0   100%
+----------------------------------------------------------------------------------
+TOTAL                                    447     16    110     11    95%
+PASS G5 Unit tests
+G6: 43 files scanned
+PASS G6 Secrets
+PASS G7 Clock
+G8: dataset and traceability clean
+PASS G8 Dataset
+PASS oracle: counts {'pass': 30, 'fail': 0, 'error': 0}
+PASS break_l1_structure: 6 cases flagged L1
+PASS break_l2_invariant: 11 cases flagged INV-007
+PASS break_l2_property: 12 cases flagged PROP-004
+PASS break_l3_semantic: 10 cases lost points without L1/L2 violations
+PASS service_errors_over_cap: counts {'pass': 26, 'fail': 0, 'error': 4}
+PASS service_errors_within_cap: counts {'pass': 27, 'fail': 0, 'error': 3}
+PASS SC Harness self-check
+SKIP G9 Evaluation (--offline)
