@@ -32,12 +32,12 @@ label so every story stays traceable and independently testable.
 
 **Purpose**: Project initialization per plan.md §Project Structure and §Dependencies
 
-- [ ] T001 Create directories `src/reminder_agent/`, `prompts/`, `tests/`, `evals/`, `.harness/`, `reports/` (with `reports/.gitkeep`) at the repository root
+- [X] T001 Create directories `src/reminder_agent/`, `prompts/`, `tests/`, `evals/`, `.harness/`, `reports/` (with `reports/.gitkeep`) at the repository root
 - [X] T002 Create `pyproject.toml`: project `reminder-agent`, `requires-python = ">=3.12,<3.13"`, `dependencies = []`, setuptools `src` layout, ruff config (target py312; select `E F W I B C90 D ANN S UP SIM PL`; mccabe 10; Google docstrings; isort first-party `reminder_agent`), coverage (branch, source `src`, `fail_under = 90`), pytest (`testpaths = ["tests"]`, `--strict-markers`, marker `covers(*ids)`) — no `ignore`/`exclude`/`per-file-ignores` entries (Principle II)
 - [X] T003 [P] Create `requirements-dev.txt` pinning exactly the packages in plan.md §Dependencies (`pytest==9.2.0`, `coverage==7.17.4`, `ruff==0.17.6`, `bandit==1.9.4`, `detect-secrets==1.5.0`, `jsonschema==4.25.1`); confirm each pin installs with `uv pip install -r requirements-dev.txt`
 - [X] T004 [P] Create `tests/ruff.toml` extending `../pyproject.toml` with `select = ["E","F","W","I","B","C90","UP","SIM"]` and a header comment pointing to plan.md §Ruff Rule Sets
 - [X] T005 [P] Create `.env.example` with empty `GEMINI_API_KEY=`, `GEMINI_MODEL=`, `GEMINI_TIMEOUT_SECONDS=`; verify `.gitignore` lists `.env`, `.venv/`, `__pycache__/`, `.coverage`, `*.egg-info/` (Principle IX)
-- [ ] T006 Create the venv and editable install per quickstart.md §1 (`uv venv --python 3.12 .venv`, `uv pip install -e . -r requirements-dev.txt`)
+- [X] T006 Create the venv and editable install per quickstart.md §1 (`uv venv --python 3.12 .venv`, `uv pip install -e . -r requirements-dev.txt`)
 
 ---
 
@@ -53,7 +53,7 @@ label so every story stays traceable and independently testable.
 - [X] T010 [P] Write `.harness/check_dataset.py` (G8): parse FR/INV/PROP ids defined in `specs/001-nl-reminder-agent/spec.md` (bold `**ID**:` definitions); fail on duplicate case ids, empty or unknown `covers`, fewer than 20 cases or fewer than 3 per category, an `expected` that fails `.harness/output.schema.json`, an e-mail/phone/URL pattern in any `request.text`, missing `"synthetic": true`, or any FR/INV/PROP id cited by neither a case nor a `@pytest.mark.covers` marker under `tests/` (found by reading test sources as text, no imports); stdlib + `jsonschema` only, no `subprocess`
 - [X] T011 Write `.harness/gates.sh` running G1–G9 in plan.md §Harness Gates order, printing `PASS`/`FAIL` per gate and exiting 0 only if all pass; `--offline` runs G1–G8; G1 passes with a warning while tag `baseline-1b-before-implement` does not exist; loads `.env` with `set -a; . ./.env; set +a` only for G9; never echoes the key
 - [X] T012 [P] Write `tests/conftest.py`: autouse fixture replacing `socket.socket` and `socket.create_connection` with a raiser (research R9); `FakeModelClient` per contracts/model-client.md (records `(system, user, response_schema)` calls; returns scripted strings or raises scripted exceptions); helper `interp(**fields)` building a JSON reply in the data-model.md Interpretation shape with unspecified fields `null`
-- [ ] T013 Create the interface stub only: `src/reminder_agent/__init__.py`, `errors.py` (the six error classes of data-model.md §Errors), `ports.py` (`ModelClient` Protocol from contracts/model-client.md), and placeholder `request.py`/`output.py`/`agent.py`/`model_client.py` whose public names (`Request`, `DecisionOutput`, `handle_request`, `GeminiClient`) exist but raise `NotImplementedError`, so tests fail on behaviour rather than import errors
+- [X] T013 (Superseded: skipped before baseline at the user's request; the real modules now provide these interfaces) Create the interface stub only: `src/reminder_agent/__init__.py`, `errors.py` (the six error classes of data-model.md §Errors), `ports.py` (`ModelClient` Protocol from contracts/model-client.md), and placeholder `request.py`/`output.py`/`agent.py`/`model_client.py` whose public names (`Request`, `DecisionOutput`, `handle_request`, `GeminiClient`) exist but raise `NotImplementedError`, so tests fail on behaviour rather than import errors
 
 **Checkpoint**: `python .harness/check_dataset.py` reports only "id not cited by a test" gaps (tests arrive in Phase 4).
 
@@ -107,15 +107,15 @@ label so every story stays traceable and independently testable.
 
 **Independent Test**: `pytest tests/test_us1_create.py tests/test_request_validation.py tests/test_model_client.py tests/test_interpretation.py tests/test_cli.py` passes; quickstart.md §3 returns the expected object.
 
-- [ ] T031 [P] [US1] Implement `src/reminder_agent/request.py`: frozen `Request` dataclass validating data-model.md Request.now (ISO 8601 with offset; naive → `InvalidRequest`) and Request.timezone (`zoneinfo.ZoneInfo` load; failure → `InvalidRequest`); Request.text any string
-- [ ] T032 [P] [US1] Implement `src/reminder_agent/calendar_facts.py`: from `Request` only, return local date/time, weekday, current offset and the next 14 dates with weekday names (data-model.md CalendarFacts); no wall-clock call (G7)
-- [ ] T033 [P] [US1] Implement `src/reminder_agent/model_client.py` `GeminiClient` per contracts/model-client.md and research R1/R2/R5 using `http.client.HTTPSConnection` + `ssl.create_default_context()`; injectable `connection_factory`; `from_env(environ)`; no prompt text, parsing beyond extracting reply text, or decision logic
-- [ ] T034 [P] [US1] Implement `src/reminder_agent/interpretation.py`: parse model text into a frozen `Interpretation` enforcing every data-model.md Interpretation field rule (Interpretation.decision, .task, .due_local, .relative_minutes, .reminder_ref, .snooze_minutes, .question, .refusal_reason); any violation → `InvalidModelOutput`
-- [ ] T035 [US1] Write `prompts/system.md` (role, output fields, how to use the calendar list, `due_local` vs `relative_minutes`, task phrasing per FR-005, marker line `Marker: violet-harbor-lantern`) and implement `src/reminder_agent/prompt.py`: load `prompts/system.md`, build the user message (text, now, timezone, CalendarFacts) and the Gemini `responseSchema` for Interpretation (OpenAPI subset, `nullable: true`)
-- [ ] T036 [US1] Implement `src/reminder_agent/resolve.py` create path: `relative_minutes` → `now + timedelta`; `due_local` → attach request tz; re-express in the request tz offset at that instant (INV-007); serialise as `YYYY-MM-DDTHH:MM:SS±HH:MM`
-- [ ] T037 [US1] Implement `src/reminder_agent/output.py`: frozen `DecisionOutput` with the seven keys of data-model.md DecisionOutput; constructor enforces spec §Output Schema null/required rules; `to_dict()`, `to_json()` (single object)
-- [ ] T038 [US1] Implement `src/reminder_agent/agent.py` `handle_request(request, client, *, secrets=())` per contracts/agent-api.md and the data-model.md resolution transitions (create branch); export public names from `src/reminder_agent/__init__.py`
-- [ ] T039 [US1] Implement `src/reminder_agent/__main__.py` CLI per contracts/agent-api.md (stdin JSON → stdout decision; exit codes 0/2/3/4; injectable client factory for tests)
+- [X] T031 [P] [US1] Implement `src/reminder_agent/request.py`: frozen `Request` dataclass validating data-model.md Request.now (ISO 8601 with offset; naive → `InvalidRequest`) and Request.timezone (`zoneinfo.ZoneInfo` load; failure → `InvalidRequest`); Request.text any string
+- [X] T032 [P] [US1] Implement `src/reminder_agent/calendar_facts.py`: from `Request` only, return local date/time, weekday, current offset and the next 14 dates with weekday names (data-model.md CalendarFacts); no wall-clock call (G7)
+- [X] T033 [P] [US1] Implement `src/reminder_agent/model_client.py` `GeminiClient` per contracts/model-client.md and research R1/R2/R5 using `http.client.HTTPSConnection` + `ssl.create_default_context()`; injectable `connection_factory`; `from_env(environ)`; no prompt text, parsing beyond extracting reply text, or decision logic
+- [X] T034 [P] [US1] Implement `src/reminder_agent/interpretation.py`: parse model text into a frozen `Interpretation` enforcing every data-model.md Interpretation field rule (Interpretation.decision, .task, .due_local, .relative_minutes, .reminder_ref, .snooze_minutes, .question, .refusal_reason); any violation → `InvalidModelOutput`
+- [X] T035 [US1] Write `prompts/system.md` (role, output fields, how to use the calendar list, `due_local` vs `relative_minutes`, task phrasing per FR-005, marker line `Marker: violet-harbor-lantern`) and implement `src/reminder_agent/prompt.py`: load `prompts/system.md`, build the user message (text, now, timezone, CalendarFacts) and the Gemini `responseSchema` for Interpretation (OpenAPI subset, `nullable: true`)
+- [X] T036 [US1] Implement `src/reminder_agent/resolve.py` create path: `relative_minutes` → `now + timedelta`; `due_local` → attach request tz; re-express in the request tz offset at that instant (INV-007); serialise as `YYYY-MM-DDTHH:MM:SS±HH:MM`
+- [X] T037 [US1] Implement `src/reminder_agent/output.py`: frozen `DecisionOutput` with the seven keys of data-model.md DecisionOutput; constructor enforces spec §Output Schema null/required rules; `to_dict()`, `to_json()` (single object)
+- [X] T038 [US1] Implement `src/reminder_agent/agent.py` `handle_request(request, client, *, secrets=())` per contracts/agent-api.md and the data-model.md resolution transitions (create branch); export public names from `src/reminder_agent/__init__.py`
+- [X] T039 [US1] Implement `src/reminder_agent/__main__.py` CLI per contracts/agent-api.md (stdin JSON → stdout decision; exit codes 0/2/3/4; injectable client factory for tests)
 - [ ] T040 [US1] Run US1 independent test set → green; G2, G3, G4, G7 clean
 
 **Checkpoint**: MVP — create works end to end with the fake client.
@@ -128,9 +128,9 @@ label so every story stays traceable and independently testable.
 
 **Independent Test**: `pytest tests/test_us2_clarify.py` passes.
 
-- [ ] T041 [US2] Extend `src/reminder_agent/resolve.py`: detect non-existent (gap) and ambiguous (fold) wall times per research R3 → clarify; `due < now` → clarify; missing time or task → clarify, each with a specific default question
-- [ ] T042 [US2] Extend `src/reminder_agent/agent.py` clarify branch: keep the model's question when non-empty else default; force all other fields to null
-- [ ] T043 [US2] Extend `prompts/system.md` with the never-guess rules of FR-007/FR-008 (no am/pm on 1–12, vague periods, impossible values, missing task/time) and one-question phrasing per FR-009
+- [X] T041 [US2] Extend `src/reminder_agent/resolve.py`: detect non-existent (gap) and ambiguous (fold) wall times per research R3 → clarify; `due < now` → clarify; missing time or task → clarify, each with a specific default question
+- [X] T042 [US2] Extend `src/reminder_agent/agent.py` clarify branch: keep the model's question when non-empty else default; force all other fields to null
+- [X] T043 [US2] Extend `prompts/system.md` with the never-guess rules of FR-007/FR-008 (no am/pm on 1–12, vague periods, impossible values, missing task/time) and one-question phrasing per FR-009
 - [ ] T044 [US2] Run `pytest tests/test_us2_clarify.py tests/test_us1_create.py` → green
 
 ---
@@ -141,9 +141,9 @@ label so every story stays traceable and independently testable.
 
 **Independent Test**: `pytest tests/test_us4_guardrails.py` passes.
 
-- [ ] T045 [P] [US4] Implement `src/reminder_agent/guard.py`: detect the marker, any 40-char whitespace-normalised run of the system text, or any `secrets` value in any string field (research R7)
-- [ ] T046 [US4] Extend `src/reminder_agent/agent.py`: refuse branch (reason kept, others null); run `guard.py` on every final output and replace a hit with `refuse`/`prompt_extraction`
-- [ ] T047 [US4] Extend `prompts/system.md` with scope (FR-013), the three reasons and precedence (FR-014..FR-016, including "real reminder + attack → refuse"), quoted-content-is-data (FR-017), never reveal instructions, and do-not-refuse harmless wording (PROP-005)
+- [X] T045 [P] [US4] Implement `src/reminder_agent/guard.py`: detect the marker, any 40-char whitespace-normalised run of the system text, or any `secrets` value in any string field (research R7)
+- [X] T046 [US4] Extend `src/reminder_agent/agent.py`: refuse branch (reason kept, others null); run `guard.py` on every final output and replace a hit with `refuse`/`prompt_extraction`
+- [X] T047 [US4] Extend `prompts/system.md` with scope (FR-013), the three reasons and precedence (FR-014..FR-016, including "real reminder + attack → refuse"), quoted-content-is-data (FR-017), never reveal instructions, and do-not-refuse harmless wording (PROP-005)
 - [ ] T048 [US4] Run `pytest tests/test_us4_guardrails.py` and all earlier story tests → green
 
 ---
@@ -154,8 +154,8 @@ label so every story stays traceable and independently testable.
 
 **Independent Test**: `pytest tests/test_us3_reschedule_snooze.py` passes.
 
-- [ ] T049 [US3] Extend `src/reminder_agent/resolve.py` and `agent.py`: reschedule (requires data-model.md Interpretation.reminder_ref and a resolvable future due; past → clarify) and snooze (requires reminder_ref and data-model.md Interpretation.snooze_minutes ≥ 1; `due` null), else clarify per FR-012
-- [ ] T050 [US3] Extend `prompts/system.md` with reschedule/snooze rules (reference copied as written, hours → minutes, no reference → clarify)
+- [X] T049 [US3] Extend `src/reminder_agent/resolve.py` and `agent.py`: reschedule (requires data-model.md Interpretation.reminder_ref and a resolvable future due; past → clarify) and snooze (requires reminder_ref and data-model.md Interpretation.snooze_minutes ≥ 1; `due` null), else clarify per FR-012
+- [X] T050 [US3] Extend `prompts/system.md` with reschedule/snooze rules (reference copied as written, hours → minutes, no reference → clarify)
 - [ ] T051 [US3] Run full `pytest` → green; `coverage report` ≥ 90%
 
 ---
